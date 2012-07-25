@@ -102,4 +102,40 @@ public class HawtCustomDispatchSourceTest {
         assertTrue(eventHandler.await(1, TimeUnit.SECONDS));
 
     }
+
+    @Test
+    public void testResumeFromDifferentThread() throws InterruptedException {
+        DispatchQueue queue = dispatcher.createQueue("test");
+        final HawtCustomDispatchSource<Integer, Integer> source =
+                new HawtCustomDispatchSource<Integer, Integer>(dispatcher, EventAggregators.INTEGER_ADD, queue);
+
+        RunnableCountDownLatch eventHandler = new RunnableCountDownLatch(1){
+            @Override
+            public void run() {
+                assertEquals(new Integer(9), source.getData());
+                super.run();    //To change body of overridden methods use File | Settings | File Templates.
+            }
+        };
+
+        source.setEventHandler(eventHandler);
+
+        DispatchQueue globalQueue = dispatcher.getGlobalQueue();
+        globalQueue.execute(new Task() {
+            @Override
+            public void run() {
+                source.resume();
+            }
+        });
+
+        globalQueue.execute(new Task() {
+            @Override
+            public void run() {
+                source.merge(4);
+                source.merge(5);
+            }
+        });
+
+        assertTrue(eventHandler.await(1, TimeUnit.SECONDS));
+
+    }
 }

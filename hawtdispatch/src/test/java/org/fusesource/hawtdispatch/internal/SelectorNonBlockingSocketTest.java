@@ -5,10 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.channels.spi.AbstractSelectableChannel;
 import java.util.Iterator;
 
@@ -20,6 +17,26 @@ import java.util.Iterator;
  * To change this template use File | Settings | File Templates.
  */
 public class SelectorNonBlockingSocketTest {
+
+    @Test(expected = NotYetBoundException.class)
+    public void testServerSocketAccept() throws IOException {
+        // cannot accept a server socket that has not been bound
+        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.accept();
+    }
+
+    @Test
+    public void testSelectorBlockingSelect() throws IOException {
+        Selector selector = Selector.open();
+        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.configureBlocking(false);
+        serverSocketChannel.socket().bind(new InetSocketAddress(4440));
+        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        System.out.println("About to select...");
+        // this will block...
+//        selector.select();
+        System.out.println("finished selecting");
+    }
 
     public static void main(String[] args) {
 
